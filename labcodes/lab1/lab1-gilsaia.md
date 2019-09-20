@@ -101,4 +101,3 @@ $(call create_target,ucore.img)
 
 # 练习2
 
-this is a try
