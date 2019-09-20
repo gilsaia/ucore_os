@@ -100,5 +100,3 @@ $(call create_target,ucore.img)
 经过阅读相关资料后得知，BIOS在进行完硬件自检以及初始化后，会将启动设备的第一扇区也就是主引导扇区放到内存的0x7c00处，在ucore中也就是将我们之前生成的bootblock块拷贝入内存，而之前生成bootblock块的命令也可以证实这一点，而显示的信息以及makefile的命令都指出链接生成bootblock后还经过了sign程序，从sign的报错来看bootblock块也就是主引导扇区大小应该不能超过512字节，而最后两个字节应已规定好不能写入其他，倒数第二个字节是0x55,倒数第一个字节是0xAA
 
 # 练习2
-
-final test
