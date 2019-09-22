@@ -261,3 +261,64 @@ cr0是系统内的控制寄存器，第一位用来表示保护模式的开启�
 设置好堆栈进入bootmain主方法
 
 # 练习4
+
+进入bootmain方法后，首先读取elf文件头
+```
+    // read the 1st page off disk
+    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);
+```
+这里调用的函数可以读取硬盘中从某一点开始任意长度的内容
+```
+    // If this is too slow, we could read lots of sectors at a time.
+    // We'd write more to memory than asked, but it doesn't matter --
+    // we load in increasing order.
+    for (; va < end_va; va += SECTSIZE, secno ++) {
+        readsect((void *)va, secno);
+    }
+```
+函数中真正读取硬盘的是这一段循环，读取某一扇区至某一位置，注释中说明了这样会将整个扇区读出导致多读出内容，但是并不重要
+
+对应的实际读取硬盘扇区的函数
+```
+    // wait for disk to be ready
+    waitdisk();
+
+    outb(0x1F2, 1);                         // count = 1
+    outb(0x1F3, secno & 0xFF);
+    outb(0x1F4, (secno >> 8) & 0xFF);
+    outb(0x1F5, (secno >> 16) & 0xFF);
+    outb(0x1F6, ((secno >> 24) & 0xF) | 0xE0);
+    outb(0x1F7, 0x20);                      // cmd 0x20 - read sectors
+
+    // wait for disk to be ready
+    waitdisk();
+
+    // read a sector
+    insl(0x1F0, dst, SECTSIZE / 4);
+```
+读取相关参考资料可以知道，读取硬盘首先要等待硬盘准备好，也就是`waitdisk`函数所做的事情，然后将各IO地址写好参数后一样等待硬盘准备好，而后读取相关数据
+
+获取到elf文件头，要先判断是不是合法的elf文件
+```
+    // is this a valid ELF?
+    if (ELFHDR->e_magic != ELF_MAGIC) {
+        goto bad;
+    }
+```
+根据elf头部信息，将文件读入内存
+```
+    // load each program segment (ignores ph flags)
+    ph = (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR->e_phoff);
+    eph = ph + ELFHDR->e_phnum;
+    for (; ph < eph; ph ++) {
+        readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, ph->p_offset);
+    }
+```
+最后找到入口，进入入口
+```
+    // call the entry point from the ELF header
+    // note: does not return
+    ((void (*)(void))(ELFHDR->e_entry & 0xFFFFFF))();
+```
+
+# 练习5
