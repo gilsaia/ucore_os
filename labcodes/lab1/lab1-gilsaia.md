@@ -322,3 +322,50 @@ cr0是系统内的控制寄存器，第一位用来表示保护模式的开启�
 ```
 
 # 练习5
+
+基本按照注释以及参考书写，其中几个对我来说的要点如下：
+* uint32_t只是对int的类型重写，起到统一类型，保证安全的作用
+* 对无符号十六进制整数输出用%x，%08x表示若数不足补至八位用零补
+* 取到的ebp与eip是一个地址，在找栈的下一个地址或找相应参数时要将其强制类型转换为指针，将它的值作为地址来寻找
+而后得到的输出如下
+```
+ebp:0x00007b28 eip:0x00100a63 args:0x00007b30 0x00007b34 0x00007b38 0x00007b3c 
+    kern/debug/kdebug.c:294: print_stackframe+21
+ebp:0x00007b38 eip:0x00100d42 args:0x00007b40 0x00007b44 0x00007b48 0x00007b4c 
+    kern/debug/kmonitor.c:125: mon_backtrace+10
+ebp:0x00007b58 eip:0x00100092 args:0x00007b60 0x00007b64 0x00007b68 0x00007b6c 
+    kern/init/init.c:48: grade_backtrace2+33
+ebp:0x00007b78 eip:0x001000bc args:0x00007b80 0x00007b84 0x00007b88 0x00007b8c 
+    kern/init/init.c:53: grade_backtrace1+38
+ebp:0x00007b98 eip:0x001000db args:0x00007ba0 0x00007ba4 0x00007ba8 0x00007bac 
+    kern/init/init.c:58: grade_backtrace0+23
+ebp:0x00007bb8 eip:0x00100101 args:0x00007bc0 0x00007bc4 0x00007bc8 0x00007bcc 
+    kern/init/init.c:63: grade_backtrace+34
+ebp:0x00007be8 eip:0x00100055 args:0x00007bf0 0x00007bf4 0x00007bf8 0x00007bfc 
+    kern/init/init.c:28: kern_init+84
+ebp:0x00007bf8 eip:0x00007d72 args:0x00007c00 0x00007c04 0x00007c08 0x00007c0c 
+    <unknow>: -- 0x00007d71 --
+```
+其中每次输出地址及参数后的下一行是按照注释调用`print_debuginfo`函数的输出，阅读相关后发现输出当前指向的函数名及相对位置
+
+# 练习6
+
+## 练习6.1
+
+通过阅读相关资料可以看到，中断向量表每项8字节，3、4字节存储了段选择子，通过查询段描述符得到的段基址加上1、2,7、8字节存储的偏移位置就可以得到结果也就是中断向量的入口
+
+## 练习6.2
+
+在对应位置通过阅读注释可以发现如何获得中断服务程序偏移量数组`__vectors[]`，而为了填充中断描述符表我们阅读`mmu.h`中的SETGATE宏，发现还需要自行确定的参数有
+* 门的类型
+* 中断服务程序的段选择子
+* 特权等级
+而中断服务程序的段选择子比较难以寻找，在经过阅读相关资料以及参考答案并仔细对比之后，可以发现vectors.S的程序被放在.data段下面，在通过生成vectors.S的vectors.c可以找到在文件`memlayout.h`中对相关代码段有所定义，特权等级根据描述除了系统调用为用户态以外其他均为内核态，而门描述并未清晰指定，所以只在系统调用处用了Trap Gate而其他皆为Interrupt Gate
+
+最后按照注释调用lidt指令加载idt即可
+
+## 练习6.3
+
+按照注释添加即可
+
+# 扩展练习
