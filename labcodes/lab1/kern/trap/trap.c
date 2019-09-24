@@ -47,6 +47,7 @@ idt_init(void) {
               SETGATE(idt[i],1,GD_KTEXT,__vectors[i],DPL_USER);
          }
      }
+     SETGATE(idt[T_SWITCH_TOK],1,GD_KTEXT,__vectors[T_SWITCH_TOK],DPL_USER);
      lidt(&idt_pd);
      /* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?
       *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?
@@ -174,11 +175,31 @@ trap_dispatch(struct trapframe *tf) {
     case IRQ_OFFSET + IRQ_KBD:
         c = cons_getc();
         cprintf("kbd [%03d] %c\n", c, c);
+        if(c=='3')
+        {
+            tf->tf_cs=USER_CS;
+            tf->tf_ds=tf->tf_es=tf->tf_ss=USER_DS;
+            tf->tf_eflags|=FL_IOPL_MASK;
+            print_trapframe(tf);
+        }
+        else if(c=='0')
+        {
+            tf->tf_cs=KERNEL_CS;
+            tf->tf_ds=tf->tf_es=KERNEL_DS;
+            tf->tf_eflags&=~FL_IOPL_MASK;
+            print_trapframe(tf);
+        }
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
+        tf->tf_cs=USER_CS;
+        tf->tf_ds=tf->tf_es=tf->tf_ss=USER_DS;
+        tf->tf_eflags|=FL_IOPL_MASK;
+        break;
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        tf->tf_cs=KERNEL_CS;
+        tf->tf_ds=tf->tf_es=KERNEL_DS;
+        tf->tf_eflags&=~FL_IOPL_MASK;
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
