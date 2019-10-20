@@ -35,19 +35,12 @@ static struct pseudodesc idt_pd = {
 void
 idt_init(void) {
      /* LAB1 YOUR CODE : STEP 2 */
-      extern uintptr_t __vectors[];
-     for(int i=0;i<256;++i)
-     {
-         if(i!=T_SYSCALL)
-         {
-             SETGATE(idt[i],0,GD_KTEXT,__vectors[i],DPL_KERNEL);
-         }
-         else
-         {
-              SETGATE(idt[i],1,GD_KTEXT,__vectors[i],DPL_USER);
-         }
-     }
-     lidt(&idt_pd);
+    extern uintptr_t __vectors[];
+    int i;
+    for (i = 0; i < sizeof(idt) / sizeof(struct gatedesc); i ++) {
+        SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
+    }
+    lidt(&idt_pd);
      /* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?
       *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?
       *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c

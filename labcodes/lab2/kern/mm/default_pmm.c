@@ -142,7 +142,7 @@ default_alloc_pages(size_t n) {
             p->property = page->property - n;
             SetPageProperty(p);
             list_add(toinsert, &(p->page_link));
-    }
+        }
         nr_free -= n;
         ClearPageProperty(page);
     }
@@ -164,7 +164,6 @@ default_free_pages(struct Page *base, size_t n) {
     list_entry_t *toinsert=&free_list;
     while (le != &free_list) {
         p = le2page(le, page_link);
-        le = list_next(le);
         if (base + base->property == p) {
             base->property += p->property;
             ClearPageProperty(p);
@@ -189,6 +188,7 @@ default_free_pages(struct Page *base, size_t n) {
         {
             break;
         }
+        le = list_next(le);
     }
     nr_free += n;
     list_add(toinsert, &(base->page_link));
