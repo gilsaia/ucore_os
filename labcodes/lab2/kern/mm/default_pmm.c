@@ -140,6 +140,7 @@ default_alloc_pages(size_t n) {
         if (page->property > n) {
             struct Page *p = page + n;
             p->property = page->property - n;
+            page->property=n;
             SetPageProperty(p);
             list_add(toinsert, &(p->page_link));
         }
