@@ -238,6 +238,67 @@ page_init(void) {
         }
     }
 }
+/* buddysystem*/
+/* pmm_init - initialize the physical memory management */
+// static void
+// page_init(void) {
+//     struct e820map *memmap = (struct e820map *)(0x8000 + KERNBASE);
+//     uint64_t maxpa = 0;
+
+//     cprintf("e820map:\n");
+//     int i;
+//     for (i = 0; i < memmap->nr_map; i ++) {
+//         uint64_t begin = memmap->map[i].addr, end = begin + memmap->map[i].size;
+//         cprintf("  memory: %08llx, [%08llx, %08llx], type = %d.\n",
+//                 memmap->map[i].size, begin, end - 1, memmap->map[i].type);
+//         if (memmap->map[i].type == E820_ARM) {
+//             if (maxpa < end && begin < KMEMSIZE) {
+//                 maxpa = end;
+//             }
+//         }
+//     }
+//     if (maxpa > KMEMSIZE) {
+//         maxpa = KMEMSIZE;
+//     }
+
+//     extern char end[];
+
+//     npage = maxpa / PGSIZE;
+//     /*we need twice space*/
+//     npage*=2;
+//     size_t n_t=1;
+//     while(n_t<npage)
+//     {
+//         n_t<<=1;
+//     }
+//     npage=n_t;
+//     pages = (struct Page *)ROUNDUP((void *)end, PGSIZE);
+
+//     for (i = 0; i < npage; i ++) {
+//         SetPageReserved(pages + i);
+//     }
+
+//     uintptr_t freemem = PADDR((uintptr_t)pages + sizeof(struct Page) * npage);
+
+//     for (i = 0; i < memmap->nr_map; i ++) {
+//         uint64_t begin = memmap->map[i].addr, end = begin + memmap->map[i].size;
+//         if (memmap->map[i].type == E820_ARM) {
+//             if (begin < freemem) {
+//                 begin = freemem;
+//             }
+//             if (end > KMEMSIZE) {
+//                 end = KMEMSIZE;
+//             }
+//             if (begin < end) {
+//                 begin = ROUNDUP(begin, PGSIZE);
+//                 end = ROUNDDOWN(end, PGSIZE);
+//                 if (begin < end) {
+//                     init_memmap(pa2page(begin), (end - begin) / PGSIZE);
+//                 }
+//             }
+//         }
+//     }
+// }
 
 //boot_map_segment - setup&enable the paging mechanism
 // parameters

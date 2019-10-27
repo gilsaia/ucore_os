@@ -105,6 +105,12 @@ default_init(void) {
 }
 
 static void
+bd_init(void) {
+    list_init(&free_list);
+    nr_free=0;
+}
+
+static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
@@ -117,6 +123,29 @@ default_init_memmap(struct Page *base, size_t n) {
     SetPageProperty(base);
     nr_free += n;
     list_add(&free_list, &(base->page_link));
+}
+static void
+bd_init_memmap(struct Page *base,size_t n) {
+    size_t buddy_t=1;
+    while(buddy_t<n)
+    {
+        buddy_t<<=1;
+    }
+    nr_free+=buddy_t;
+    int mod=0;
+    buddy_t<<=1;
+    size_t n_size=buddy_t;
+    for(size_t i=1;i<buddy_t;++i)
+    {
+        if((i>>mod)&1)
+        {
+            n_size>>=1;
+            ++mod;
+        }
+        (base+i)->property=n_size;
+        SetPageProperty(base+1);
+    }
+    list_add(&free_list,&(base->page_link));
 }
 
 static struct Page *
@@ -148,6 +177,46 @@ default_alloc_pages(size_t n) {
         ClearPageProperty(page);
     }
     return page;
+}
+
+static struct Page *
+bd_alloc_pages(size_t n) {
+    size_t n_t=1;
+    while(n_t<n)
+    {
+        n_t<<=1;
+    }
+    n=n_t;
+    if(n>nr_free)
+    {
+        return NULL;
+    }
+    list_entry_t *le=&free_list;
+    le=list_next(le);
+    struct Page *p=le2page(le,page_link);
+    size_t i;
+    for(i=1;(p+i)->property!=n;)
+    {
+        if((p+i*2)->property>=n)
+        {
+            i*=2;
+        }
+        else
+        {
+            i=i*2+1;
+        }
+    }
+    (p+i)->property=0;
+    ClearPageProperty(p+i);
+    size_t parent=i;
+    while(parent>1)
+    {
+        parent/=2;
+        ClearPageProperty(p+parent);
+        (p+parent)->property=((p+parent*2)->property>(p+parent*2+1)->property)?(p+parent*2)->property:(p+parent*2+1)->property;
+    }
+    nr_free-=n;
+    return (p+i);
 }
 
 static void
@@ -193,6 +262,38 @@ default_free_pages(struct Page *base, size_t n) {
     }
     nr_free += n;
     list_add(toinsert, &(base->page_link));
+}
+
+static void
+bd_free_pages(struct Page *base,size_t n) {
+    size_t n_t=1;
+    while(n_t<n)
+    {
+        n_t<<=1;
+    }
+    n=n_t;
+    list_entry_t *le=&free_list;
+    le=list_next(le);
+    struct Page *p=le2page(le,page_link);
+    size_t i=base-p;
+    SetPageProperty(p+i);
+    (p+i)->property=n;
+    size_t parent=i,node_size=n;
+    while(parent>1)
+    {
+        parent/=2;
+        node_size*=2;
+        if(((p+parent*2)->property+(p+parent*2+1)->property)==node_size)
+        {
+            SetPageProperty(p+parent);
+            (p+parent)->property=node_size;
+        }
+        else
+        {
+            (p+parent)->property=((p+parent*2)->property>(p+parent*2+1)->property)?(p+parent*2)->property:(p+parent*2+1)->property;
+        }
+    }
+    nr_free+=n;
 }
 
 static size_t
@@ -326,3 +427,12 @@ const struct pmm_manager default_pmm_manager = {
     .check = default_check,
 };
 
+// const struct pmm_manager default_pmm_manager = {
+//     .name = "default_pmm_manager",
+//     .init = bd_init,
+//     .init_memmap = bd_init_memmap,
+//     .alloc_pages = bd_alloc_pages,
+//     .free_pages = bd_free_pages,
+//     .nr_free_pages = default_nr_free_pages,
+//     .check = default_check,
+// };
