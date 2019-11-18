@@ -79,6 +79,18 @@ page2ppn(struct Page *page) {
     return page - pages;
 }
 
+/*buddy system*/
+// static inline ppn_t
+// page2ppn(struct Page *page) {
+//     ppn_t cmp=npage>>1;
+//     ppn_t tmp=page-pages;
+//     while(tmp<cmp)
+//     {
+//         tmp<<=1;
+//     }
+//     return tmp-cmp;
+// }
+
 static inline uintptr_t
 page2pa(struct Page *page) {
     return page2ppn(page) << PGSHIFT;
@@ -91,6 +103,15 @@ pa2page(uintptr_t pa) {
     }
     return &pages[PPN(pa)];
 }
+
+/*buddy system*/
+// static inline struct Page *
+// pa2page(uintptr_t pa) {
+//     if (PPN(pa) >= npage) {
+//         panic("pa2page called with invalid pa");
+//     }
+//     return &pages[PPN(pa)+(npage>>1)];
+// }
 
 static inline void *
 page2kva(struct Page *page) {
