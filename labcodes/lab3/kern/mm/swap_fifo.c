@@ -27,6 +27,7 @@
  */
 
 list_entry_t pra_list_head;
+list_entry_t *en_clock_list_cur;
 /*
  * (2) _fifo_init_mm: init pra_list_head and let  mm->sm_priv point to the addr of pra_list_head.
  *              Now, From the memory control struct mm_struct, we can access FIFO PRA
@@ -36,6 +37,7 @@ _fifo_init_mm(struct mm_struct *mm)
 {     
      list_init(&pra_list_head);
      mm->sm_priv = &pra_list_head;
+     en_clock_list_cur=&pra_list_head;
      //cprintf(" mm->sm_priv %x in fifo_init_mm\n",mm->sm_priv);
      return 0;
 }
@@ -74,6 +76,66 @@ _fifo_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tick
      list_del(victim);
      *ptr_page=p;
      return 0;
+}
+
+static int
+_enclock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page,int in_tick)
+{
+     list_entry_t *head=(list_entry_t*) mm->sm_priv;
+         assert(head != NULL);
+     assert(in_tick==0);
+     struct Page *find[4];
+     for(int i=0;i<4;++i)
+     {
+         find[i]=NULL;
+     }
+     list_entry_t *cycle=list_next(en_clock_list_cur);
+     while(cycle!=en_clock_list_cur)
+     {
+         if(cycle==head)
+         {
+             continue;
+         }
+         struct Page *p=le2page(cycle,pra_page_link);
+         pte_t *curpage=get_pte(mm->pgdir,p->pra_vaddr,0);
+         switch (*curpage&(PTE_A|PTE_D))
+         {
+         case 0x000:
+             find[0]=p;
+             break;
+         case 0x040:
+             find[1]=p;
+            break;
+         case 0x020:
+             find[2]=p;
+             *curpage&=(~PTE_A);
+         case 0x060:
+             find[3]=p;
+             *curpage&=(~PTE_A);
+         default:
+             break;
+         }
+         if(find[0]!=NULL)
+         {
+             break;
+         }
+         cycle=list_next(cycle);
+     }
+     for(int i=0;i<4;++i)
+     {
+         if(find[i]!=NULL)
+         {
+             *ptr_page=find[i];
+             if(i==1||i==3)
+             {
+                 pte_t *curpage=get_pte(mm->pgdir,find[i]->pra_vaddr,0);
+                 *curpage&=(~PTE_D);
+             }
+             list_del(&find[i]->pra_page_link);
+             break;
+         }
+     }
+    return 0;
 }
 
 static int
