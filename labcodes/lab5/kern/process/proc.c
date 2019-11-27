@@ -115,6 +115,8 @@ alloc_proc(void) {
     proc->cr3=boot_cr3;
     proc->flags=0;
     memset(proc->name,0,PROC_NAME_LEN);
+    proc->wait_state=0;
+    proc->cptr=proc->yptr=proc->optr=NULL;
      //LAB5 YOUR CODE : (update LAB4 steps)
     /*
      * below fields(add in LAB5) in proc_struct need to be initialized	
@@ -411,6 +413,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     {
         goto fork_out;
     }
+    proc->parent=current;
     if(setup_kstack(proc)!=0)
     {
         goto bad_fork_cleanup_proc;
@@ -422,8 +425,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     copy_thread(proc,stack,tf);
     proc->pid = get_pid();
     hash_proc(proc);
-    list_add(&proc_list, &(proc->list_link));
-    nr_process ++;
+    set_links(proc);
     wakeup_proc(proc);
     ret=proc->pid;
 

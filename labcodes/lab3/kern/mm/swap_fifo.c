@@ -109,9 +109,11 @@ _enclock_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page,int in_ti
          case 0x020:
              find[2]=p;
              *curpage&=(~PTE_A);
+             break;
          case 0x060:
              find[3]=p;
              *curpage&=(~PTE_A);
+             break;
          default:
              break;
          }
