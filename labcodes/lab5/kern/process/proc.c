@@ -626,6 +626,11 @@ load_icode(unsigned char *binary, size_t size) {
     //(6) setup trapframe for user environment
     struct trapframe *tf = current->tf;
     memset(tf, 0, sizeof(struct trapframe));
+    tf->tf_cs=USER_CS;
+    tf->tf_ds=tf->tf_es=tf->tf_ss=USER_DS;
+    tf->tf_esp=USTACKTOP;
+    tf->tf_eip=elf->e_entry;
+    tf->tf_eflags=FL_IF;
     /* LAB5:EXERCISE1 YOUR CODE
      * should set tf_cs,tf_ds,tf_es,tf_ss,tf_esp,tf_eip,tf_eflags
      * NOTICE: If we set trapframe correctly, then the user level process can return to USER MODE from kernel. So
