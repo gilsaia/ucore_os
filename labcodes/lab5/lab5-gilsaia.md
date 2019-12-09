@@ -69,3 +69,23 @@ exit的功能是释放进程占用的资源并结束运行进程。在ucore中ex
 释放页表项记录的物理内存，以及mm结构、vma结构、页目录表占用的内存。
 
 将自己的state设置为ZOMBIE，然后唤醒父进程，并调用schedule函数，等待父进程回收剩下的资源，最终彻底结束子进程。
+
+## 流程图
+
+```mermaid
+graph TB
+    START(START)-->|alloc_proc|UNINIT
+    UNINIT-->|proc_init/wakeup_proc|RUNNABLE
+    RUNNABLE-->|proc_run|RUNNING
+    RUNNING-->RUNNABLE
+    RUNNABLE-->|do_wait/do_sleep|SLEEPING
+    SLEEPING-->|wakeup_proc|RUNNABLE
+    RUNNABLE-->|do_exit|ZOMBIE
+```
+# 扩展
+
+首先找到调用copy_range的地方..vmm里的dup_mmap share=1
+
+copy_range里设好share的部分
+
+最后在处理缺页的部分do_pgfault将原来的复制代码改一下放上去就完了
