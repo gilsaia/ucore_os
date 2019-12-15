@@ -10,7 +10,7 @@ proc中的lab4代码要多初始化一些东西，trap中的lab1代码要调整�
 ## 问题一
 请在实验报告中描述当创建一个用户态进程并加载了应用程序后，CPU是如何让这个应用程序最终在用户态执行起来的。即这个用户态进程被ucore选择占用CPU执行（RUNNING态）到具体执行应用程序第一条指令的整个经过。
 
-首先是第零个进城创建的第一个内核进程执行init_main函数，进一步调用kernal_thread创建用户进程，而后进入调度schedule->proc_run,分别切换当前进程，而后进行切换上下文的一系列操作，从而开始运行用户进程，而实际开始执行的函数是填入的user_main函数再调用kernal_execve函数通过系统调用SYS_exec，而后的过程如vector128(vectors.S)-->__alltraps(trapentry.S)-->trap(trap.c)-->trap_dispatch(trap.c)---->syscall(syscall.c)-->sys_exec（syscall.c）-->do_execve(proc.c)，做好mm的检查而后进入load_icode函数，这里的资料上写的以及函数注释解释的非常细致，最后将中断帧修改从而在跳回trapentry的iret跳至用户代码
+首先是第零个进程创建的第一个内核进程执行init_main函数，进一步调用kernal_thread创建用户进程，而后进入调度schedule->proc_run,分别切换当前进程，而后进行切换上下文的一系列操作，从而开始运行用户进程，而实际开始执行的函数是填入的user_main函数再调用kernal_execve函数通过系统调用SYS_exec，而后的过程如vector128(vectors.S)-->__alltraps(trapentry.S)-->trap(trap.c)-->trap_dispatch(trap.c)---->syscall(syscall.c)-->sys_exec（syscall.c）-->do_execve(proc.c)，做好mm的检查而后进入load_icode函数，这里的资料上写的以及函数注释解释的非常细致，最后将中断帧修改从而在跳回trapentry的iret跳至用户代码
 
 过程中的BSS段之前没有听说过，查了一下含义
 >BSS段通常是指用来存放程序中未初始化的或者初始化为0的全局变量和静态变量的一块内存区域。 特点是可读写的，在程序执行之前BSS段会自动清0。
