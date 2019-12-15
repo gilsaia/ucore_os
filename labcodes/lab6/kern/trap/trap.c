@@ -227,7 +227,7 @@ trap_dispatch(struct trapframe *tf) {
         {
             // print_ticks();
             ticks=0;
-            // current->need_resched=1;
+            current->need_resched=1;
             sched_class_proc_tick(current);
         }
         /* handle the timer interrupt */

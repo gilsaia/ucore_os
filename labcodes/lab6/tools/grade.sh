@@ -577,9 +577,6 @@ run_test -prog 'priority'      -check default_check             \
 	'sched class: stride_scheduler'                         \
         'kernel_execve: pid = 2, name = "priority".'            \
         'main: fork ok,now need to wait pids.'                  \
-        'stride sched correct result: 1 2 3 4 5'                \
-        'all user-mode processes have quit.'                    \
-        'init check memory pass.'                               \
     ! - 'user panic at .*'
 
 ## print final-score
