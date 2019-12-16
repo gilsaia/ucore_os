@@ -37,6 +37,12 @@ cond_signal (condvar_t *cvp) {
    *          }
    *       }
    */
+    if (cvp->count > 0) { // 若存在因为当前条件变量而等待的进程的话
+        up(&(cvp->sem));
+        cvp->owner->next_count++; // 所属管程的 next 计数 加 1 表示当前进程会被等待者堵塞
+        down(&(cvp->owner->next)); // 阻塞自己 等待条件同步
+        cvp->owner->next_count--;
+    }
    cprintf("cond_signal end: cvp %x, cvp->count %d, cvp->owner->next_count %d\n", cvp, cvp->count, cvp->owner->next_count);
 }
 
@@ -55,5 +61,14 @@ cond_wait (condvar_t *cvp) {
     *         wait(cv.sem);
     *         cv.count --;
     */
+    cvp->count++;
+    if (cvp->owner->next_count > 0) {
+        up(&(cvp->owner->next));
+    } else {
+        up(&(cvp->owner->mutex));
+    }
+
+    down(&(cvp->sem)); // 阻塞自己 等待条件成真
+    cvp->count--;
     cprintf("cond_wait end:  cvp %x, cvp->count %d, cvp->owner->next_count %d\n", cvp, cvp->count, cvp->owner->next_count);
 }
